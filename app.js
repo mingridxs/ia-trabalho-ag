@@ -126,19 +126,21 @@
   function criarLinhaProjeto(p) {
     const tr = document.createElement('tr');
     const campos = [
-      ['Nome do projeto', p.nome, 'text'],
-      ['Custo em reais', p.custo, 'decimal'],
-      ['Benefício em pontos', p.beneficio, 'decimal'],
+      ['Nome do projeto', p.nome, 'text', ''],
+      ['Custo em reais', p.custo, 'decimal', 'Custo (R$)'],
+      ['Benefício em pontos', p.beneficio, 'decimal', 'Benefício (pontos)'],
     ];
     tr.appendChild(document.createElement('td'));
-    campos.forEach(([rotulo, valor, modo]) => {
+    campos.forEach(([rotulo, valor, modo, visivel]) => {
       const td = document.createElement('td');
+      if (visivel) td.dataset.rotulo = visivel;
       const inp = document.createElement('input');
       inp.type = 'text';
       inp.inputMode = modo;
       inp.value = valor;
       inp.autocomplete = 'off';
       inp.setAttribute('aria-label', rotulo);
+      inp.placeholder = rotulo;
       td.appendChild(inp);
       tr.appendChild(td);
     });
@@ -146,7 +148,9 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'remover';
-    btn.textContent = 'Remover';
+    btn.textContent = '✕';
+    btn.title = 'Remover projeto';
+    btn.setAttribute('aria-label', 'Remover projeto');
     btn.addEventListener('click', () => {
       tr.remove();
       renumerarProjetos();
@@ -387,9 +391,11 @@
     const X = (g) => m.e + (g / maxX) * (W - m.e - m.d);
     const Y = (v) => H - m.b - (v / maxY) * (H - m.t - m.b);
 
+    const css = getComputedStyle(document.documentElement);
+    const cor = (nome) => css.getPropertyValue(nome).trim();
     ctx.font = '11px system-ui, sans-serif';
-    ctx.fillStyle = '#5b6b7b';
-    ctx.strokeStyle = '#e3e9ef';
+    ctx.fillStyle = cor('--suave');
+    ctx.strokeStyle = cor('--grade');
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const v = (maxY * i) / 4;
@@ -406,21 +412,21 @@
       ctx.fillText(String(g), X(g), H - 8);
     }
 
-    const linha = (campo, cor, larg) => {
-      ctx.strokeStyle = cor;
+    const linha = (campo, tinta, larg) => {
+      ctx.strokeStyle = tinta;
       ctx.lineWidth = larg;
       ctx.beginPath();
       h.forEach((r, i) => (i ? ctx.lineTo(X(r.geracao), Y(r[campo])) : ctx.moveTo(X(r.geracao), Y(r[campo]))));
       ctx.stroke();
       const u = h[h.length - 1];
-      ctx.fillStyle = cor;
+      ctx.fillStyle = tinta;
       ctx.beginPath();
       ctx.arc(X(u.geracao), Y(u[campo]), 3, 0, Math.PI * 2);
       ctx.fill();
     };
-    linha('acumulado', '#1b7f3b', 4);
-    linha('melhor', '#1f6feb', 2);
-    linha('media', '#d9730d', 2);
+    linha('acumulado', cor('--elite'), 4);
+    linha('melhor', cor('--p1'), 2);
+    linha('media', cor('--p2'), 2);
   }
 
   function renderLog() {
@@ -706,8 +712,27 @@
     desenharQuadro();
   }
 
+  /* ================= Tema claro/escuro =================
+     Só muda a aparência; não interfere no estado do algoritmo. */
+  function aplicarTema(tema, salvar) {
+    document.documentElement.dataset.tema = tema;
+    const escuro = tema === 'escuro';
+    const btn = $('btnTema');
+    btn.textContent = escuro ? '☀️ Modo claro' : '🌙 Modo noturno';
+    btn.setAttribute('aria-pressed', String(escuro));
+    if (salvar) {
+      try { localStorage.setItem('tema', tema); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
+    }
+    renderGrafico(); // o gráfico usa as cores do tema
+  }
+
   /* ================= Inicialização ================= */
   function iniciar() {
+    aplicarTema(document.documentElement.dataset.tema === 'escuro' ? 'escuro' : 'claro', false);
+    $('btnTema').addEventListener('click', () => {
+      aplicarTema(document.documentElement.dataset.tema === 'escuro' ? 'claro' : 'escuro', true);
+    });
+
     const tbody = $('tabProjetos').querySelector('tbody');
     EXEMPLO.forEach((p) => tbody.appendChild(criarLinhaProjeto(p)));
     renumerarProjetos();

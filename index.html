@@ -4,120 +4,76 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Simulador de Algoritmo Genético — Projetos do Campus</title>
+  <meta name="description" content="Simulador de algoritmo genético para selecionar projetos de melhoria de um campus com orçamento limitado.">
+  <meta name="theme-color" content="#14263a">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script>
+    // Define o tema antes de desenhar a página (evita piscar): escolha salva ou preferência do sistema.
+    (function () {
+      var tema = null;
+      try { tema = localStorage.getItem('tema'); } catch (e) {}
+      if (tema !== 'claro' && tema !== 'escuro') {
+        tema = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro';
+      }
+      document.documentElement.dataset.tema = tema;
+    })();
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topo">
-    <div>
-      <h1>Simulador de Algoritmo Genético</h1>
-      <p>Seleção de projetos de melhoria do campus com orçamento limitado · Inteligência Artificial · UFPI 2026.2</p>
+    <div class="marca">
+      <img src="favicon.svg" alt="" width="44" height="44">
+      <div>
+        <h1>Simulador de Algoritmo Genético</h1>
+        <p>Seleção de projetos de melhoria do campus com orçamento limitado · Inteligência Artificial · UFPI 2026.2</p>
+      </div>
     </div>
-    <a class="repo" href="https://github.com/mingridxs/ia-trabalho-ag" target="_blank" rel="noopener">Código-fonte no GitHub</a>
+    <div class="acoes-topo">
+      <button type="button" id="btnTema" class="botao-topo" aria-pressed="false">🌙 Modo noturno</button>
+      <a class="botao-topo" href="https://github.com/mingridxs/ia-trabalho-ag" target="_blank" rel="noopener">Código-fonte no GitHub</a>
+    </div>
   </header>
 
   <main>
-    <div class="colunas">
-      <section class="cartao" id="secDados">
-        <h2>Projetos e orçamento</h2>
-        <p class="dica">Cada linha é um gene do cromossomo, na ordem da tabela. Mantenha entre 4 e 15 projetos.</p>
-        <div class="rolagem">
-          <table id="tabProjetos">
-            <thead>
-              <tr><th>Gene</th><th>Nome do projeto</th><th>Custo (R$)</th><th>Benefício (pontos)</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+    <div class="painel">
+      <section class="cartao area-controles" id="secControles">
+        <div class="controles">
+          <button type="button" id="btnExecutar">▶ Executar</button>
+          <button type="button" id="btnPausar">⏸ Pausar</button>
+          <button type="button" id="btnAvancar">⏭ Avançar uma geração</button>
+          <button type="button" id="btnReiniciar" class="secundario">↺ Reiniciar</button>
         </div>
-        <button type="button" id="btnAdicionar" class="secundario">+ Adicionar projeto</button>
-        <div class="campo largo">
-          <label for="orcamento">Orçamento disponível (R$)</label>
-          <input id="orcamento" type="text" inputmode="decimal" value="7000" autocomplete="off">
-          <small>Valor não negativo, com até duas casas decimais.</small>
+        <div class="controles opcoes">
+          <label class="inline">Intervalo entre gerações
+            <input id="intervalo" type="range" min="0" max="1500" step="50" value="200">
+            <span id="intervaloTxt">200 ms</span>
+          </label>
+          <label class="inline"><input id="animar" type="checkbox" checked> Animar operações</label>
         </div>
+        <p id="status" class="status" role="status"></p>
+        <ul id="erros" class="erros" role="alert"></ul>
       </section>
 
-      <section class="cartao" id="secParametros">
-        <h2>Parâmetros do algoritmo</h2>
-        <div class="grade-campos">
-          <div class="campo">
-            <label for="tamPopulacao">Tamanho da população</label>
-            <input id="tamPopulacao" type="text" inputmode="numeric" value="20" autocomplete="off">
-            <small>Inteiro ≥ 2.</small>
-          </div>
-          <div class="campo">
-            <label for="geracoes">Número de gerações</label>
-            <input id="geracoes" type="text" inputmode="numeric" value="50" autocomplete="off">
-            <small>Inteiro ≥ 1. A população inicial é a geração 0.</small>
-          </div>
-          <div class="campo">
-            <label for="taxaCruzamento">Taxa de cruzamento (%)</label>
-            <input id="taxaCruzamento" type="text" inputmode="decimal" value="80" autocomplete="off">
-            <small>0 a 100, aplicada por par de pais.</small>
-          </div>
-          <div class="campo">
-            <label for="taxaMutacao">Taxa de mutação (%)</label>
-            <input id="taxaMutacao" type="text" inputmode="decimal" value="5" autocomplete="off">
-            <small>0 a 100, aplicada por gene.</small>
-          </div>
-          <div class="campo">
-            <label for="tamTorneio">Tamanho do torneio</label>
-            <input id="tamTorneio" type="text" inputmode="numeric" value="2" autocomplete="off">
-            <small>Inteiro entre 2 e o tamanho da população.</small>
-          </div>
-          <div class="campo">
-            <label for="elite">Indivíduos de elite</label>
-            <input id="elite" type="text" inputmode="numeric" value="1" autocomplete="off">
-            <small>Inteiro entre 0 e população − 1.</small>
-          </div>
-          <div class="campo">
-            <label for="semente">Semente aleatória</label>
-            <input id="semente" type="text" inputmode="numeric" value="42" autocomplete="off">
-            <small>Inteiro. Mesma semente, mesma execução.</small>
-          </div>
+      <section class="cartao area-anim" id="secAnimacao">
+        <h2>Animação das operações</h2>
+        <p class="dica">Reproduz os eventos reais da geração exibida: torneios, corte, troca de segmentos, mutação, reparação e avaliação.</p>
+        <p class="legenda">
+          <span><i class="bit p1">1</i> pai 1</span>
+          <span><i class="bit p2">1</i> pai 2</span>
+          <span><i class="bit mut">1</i> bit mutado</span>
+          <span><i class="bit rem">0</i> removido na reparação</span>
+          <span><i class="bit elite">1</i> elite</span>
+        </p>
+        <div id="palco" class="palco" aria-live="polite"></div>
+        <div class="controles nav-anim">
+          <button type="button" id="btnParAnt" class="secundario">◀ Par</button>
+          <span id="animPar" class="anim-par">–</span>
+          <button type="button" id="btnParProx" class="secundario">Par ▶</button>
+          <button type="button" id="btnEtapaAnt" class="secundario">◀ Etapa</button>
+          <button type="button" id="btnEtapaProx" class="secundario">Etapa ▶</button>
+          <button type="button" id="btnReproduzir" class="secundario">▶ Reproduzir este par</button>
         </div>
-      </section>
-    </div>
-
-    <section class="cartao" id="secControles">
-      <div class="controles">
-        <button type="button" id="btnExecutar">▶ Executar</button>
-        <button type="button" id="btnPausar">⏸ Pausar</button>
-        <button type="button" id="btnAvancar">⏭ Avançar uma geração</button>
-        <button type="button" id="btnReiniciar" class="secundario">↺ Reiniciar</button>
-        <label class="inline">Intervalo entre gerações
-          <input id="intervalo" type="range" min="0" max="1500" step="50" value="200">
-          <span id="intervaloTxt">200 ms</span>
-        </label>
-        <label class="inline"><input id="animar" type="checkbox" checked> Animar operações</label>
-      </div>
-      <p id="status" class="status" role="status"></p>
-      <ul id="erros" class="erros" role="alert"></ul>
-    </section>
-
-    <section class="metricas">
-      <div class="metrica"><span>Geração atual</span><strong id="mGeracao">–</strong></div>
-      <div class="metrica"><span>Melhor aptidão da geração</span><strong id="mMelhor">–</strong></div>
-      <div class="metrica"><span>Aptidão média da população</span><strong id="mMedia">–</strong></div>
-      <div class="metrica destaque"><span>Melhor resultado acumulado</span><strong id="mAcumulado">–</strong></div>
-    </section>
-
-    <section class="cartao" id="secMelhor">
-      <h2 id="tituloMelhor">Melhor solução encontrada até agora</h2>
-      <div id="melhor"></div>
-    </section>
-
-    <section class="cartao" id="secAnimacao">
-      <h2>Animação das operações</h2>
-      <p class="dica">Reproduz os eventos reais da geração exibida: torneios, corte, troca de segmentos, mutação, reparação e avaliação.
-        <span class="legenda"><i class="bit p1">1</i> pai 1 <i class="bit p2">1</i> pai 2 <i class="bit mut">1</i> bit mutado <i class="bit rem">0</i> removido na reparação <i class="bit elite">1</i> elite</span>
-      </p>
-      <div class="controles">
-        <button type="button" id="btnParAnt" class="secundario">◀ Par</button>
-        <span id="animPar">–</span>
-        <button type="button" id="btnParProx" class="secundario">Par ▶</button>
-        <button type="button" id="btnEtapaAnt" class="secundario">◀ Etapa</button>
-        <button type="button" id="btnEtapaProx" class="secundario">Etapa ▶</button>
-        <button type="button" id="btnReproduzir" class="secundario">▶ Reproduzir este par</button>
         <label class="inline">Ao executar, animar
           <select id="paresAnimados">
             <option value="1" selected>o 1º par de cada geração</option>
@@ -125,9 +81,80 @@
             <option value="0">todos os pares</option>
           </select>
         </label>
+      </section>
+
+      <section class="metricas area-metricas">
+        <div class="metrica"><span>Geração atual</span><strong id="mGeracao">–</strong></div>
+        <div class="metrica"><span>Melhor aptidão da geração</span><strong id="mMelhor">–</strong></div>
+        <div class="metrica"><span>Aptidão média da população</span><strong id="mMedia">–</strong></div>
+        <div class="metrica destaque"><span>Melhor resultado acumulado</span><strong id="mAcumulado">–</strong></div>
+      </section>
+
+      <section class="cartao area-melhor" id="secMelhor">
+        <h2 id="tituloMelhor">Melhor solução encontrada até agora</h2>
+        <div id="melhor"></div>
+      </section>
+
+      <div class="area-config">
+        <section class="cartao" id="secDados">
+          <h2>Projetos e orçamento</h2>
+          <p class="dica">Cada projeto é um gene do cromossomo, na ordem da lista. Mantenha entre 4 e 15 projetos.</p>
+          <table id="tabProjetos">
+            <thead>
+              <tr><th>Gene</th><th>Nome do projeto</th><th>Custo (R$)</th><th>Benefício (pontos)</th><th>Remover</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" id="btnAdicionar" class="secundario">+ Adicionar projeto</button>
+          <div class="campo largo">
+            <label for="orcamento">Orçamento disponível (R$)</label>
+            <input id="orcamento" type="text" inputmode="decimal" value="7000" autocomplete="off">
+            <small>Valor não negativo, com até duas casas decimais.</small>
+          </div>
+        </section>
+
+        <section class="cartao" id="secParametros">
+          <h2>Parâmetros do algoritmo</h2>
+          <div class="grade-campos">
+            <div class="campo">
+              <label for="tamPopulacao">Tamanho da população</label>
+              <input id="tamPopulacao" type="text" inputmode="numeric" value="20" autocomplete="off">
+              <small>Inteiro ≥ 2.</small>
+            </div>
+            <div class="campo">
+              <label for="geracoes">Número de gerações</label>
+              <input id="geracoes" type="text" inputmode="numeric" value="50" autocomplete="off">
+              <small>Inteiro ≥ 1. A população inicial é a geração 0.</small>
+            </div>
+            <div class="campo">
+              <label for="taxaCruzamento">Taxa de cruzamento (%)</label>
+              <input id="taxaCruzamento" type="text" inputmode="decimal" value="80" autocomplete="off">
+              <small>0 a 100, aplicada por par de pais.</small>
+            </div>
+            <div class="campo">
+              <label for="taxaMutacao">Taxa de mutação (%)</label>
+              <input id="taxaMutacao" type="text" inputmode="decimal" value="5" autocomplete="off">
+              <small>0 a 100, aplicada por gene.</small>
+            </div>
+            <div class="campo">
+              <label for="tamTorneio">Tamanho do torneio</label>
+              <input id="tamTorneio" type="text" inputmode="numeric" value="2" autocomplete="off">
+              <small>Inteiro entre 2 e o tamanho da população.</small>
+            </div>
+            <div class="campo">
+              <label for="elite">Indivíduos de elite</label>
+              <input id="elite" type="text" inputmode="numeric" value="1" autocomplete="off">
+              <small>Inteiro entre 0 e população − 1.</small>
+            </div>
+            <div class="campo">
+              <label for="semente">Semente aleatória</label>
+              <input id="semente" type="text" inputmode="numeric" value="42" autocomplete="off">
+              <small>Inteiro. Mesma semente, mesma execução.</small>
+            </div>
+          </div>
+        </section>
       </div>
-      <div id="palco" class="palco" aria-live="polite"></div>
-    </section>
+    </div>
 
     <div class="colunas">
       <section class="cartao">
@@ -138,7 +165,7 @@
       <section class="cartao">
         <h2>Histórico por geração</h2>
         <div class="rolagem alto">
-          <table id="tabHistorico">
+          <table id="tabHistorico" class="dados">
             <thead><tr><th>Geração</th><th>Melhor</th><th>Média</th><th>Melhor acumulado</th></tr></thead>
             <tbody></tbody>
           </table>
@@ -150,7 +177,7 @@
       <section class="cartao">
         <h2>População atual</h2>
         <div class="rolagem alto">
-          <table id="tabPopulacao">
+          <table id="tabPopulacao" class="dados">
             <thead><tr><th>#</th><th>Cromossomo</th><th>Custo</th><th>Aptidão</th></tr></thead>
             <tbody></tbody>
           </table>

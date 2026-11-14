@@ -31,7 +31,8 @@ Ordem dos sorteios em cada par: torneio do pai 1, torneio do pai 2, ocorrência 
 | Arquivo | Conteúdo |
 | --- | --- |
 | `index.html` | Estrutura da página |
-| `style.css` | Estilos e animações |
+| `style.css` | Estilos, temas claro e escuro, layout responsivo e animações |
+| `favicon.svg`, `dna.svg` | Ícone da página e fundo de dupla hélice |
 | `ga.js` | Algoritmo genético: gerador com semente, avaliação, reparação, torneio, cruzamento, mutação, elitismo e logs |
 | `app.js` | Interface: validação, controles, métricas, gráfico, histórico e animação |
 | `testes.js` | Testes da seção 6 (usados pela página e pelo terminal) |
@@ -50,6 +51,7 @@ Ordem dos sorteios em cada par: torneio do pai 1, torneio do pai 2, ocorrência 
 5. Acompanhe a geração atual, a melhor aptidão da geração, a aptidão média e o melhor resultado acumulado, além do gráfico, da tabela de histórico, da população atual e do log.
 6. A seção **Animação das operações** mostra, para a geração exibida, os torneios, o ponto de corte, a troca de segmentos, os bits mutados, as remoções da reparação e a avaliação. Use os botões de par e de etapa para navegar manualmente.
 7. O botão **Executar testes** roda os testes da seção 6 na própria página.
+8. O botão **Modo noturno**, no topo, alterna entre os temas claro e escuro; a escolha fica salva no navegador e não afeta os cálculos. A página se adapta a celulares.
 
 ## Parâmetros
 

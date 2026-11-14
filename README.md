@@ -7,8 +7,8 @@ Atividade prática de Algoritmo Genético · Inteligência Artificial · UFPI ·
 
 ## Autores
 
-- Maria Ingrid ([mingridxs](https://github.com/mingridxs))
-- Carlos Henrique ([CarlosRPL](https://github.com/CarlosRPL))
+- Maria Ingrid Xavier Sousa ([mingridxs](https://github.com/mingridxs))
+- Carlos Henrique Reis Portela Leal ([CarlosRPL](https://github.com/CarlosRPL))
 
 ## Descrição da solução
 
